@@ -374,6 +374,83 @@
   }
   .data-note p{font-size:14px;margin:0;color:var(--ink-2)}
 
+  /* ===== INCENTIVE SECTION ===== */
+  .incentive-panel{
+    background:var(--bw-white);
+    border:1px solid var(--rule);
+    border-top:5px solid var(--bw-blue);
+    box-shadow:0 18px 40px rgba(11,42,67,.07);
+    margin-top:36px;
+    padding:34px;
+  }
+  .incentive-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:28px;
+    padding-bottom:24px;margin-bottom:28px;
+    border-bottom:1px solid var(--rule);
+  }
+  .dominion-logo{
+    display:block;width:260px;max-width:34%;height:auto;
+    object-fit:contain;
+  }
+  .incentive-head p{max-width:690px;margin-bottom:0}
+  .incentive-grid{
+    display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);
+    gap:34px;align-items:start;
+  }
+  .program-points{
+    display:grid;gap:14px;margin-top:20px;
+  }
+  .program-point{
+    border-left:4px solid var(--bw-green);
+    padding:2px 0 2px 16px;
+  }
+  .program-point strong{
+    display:block;color:var(--bw-dark-blue);font-family:var(--display);
+    font-size:17px;margin-bottom:3px;
+  }
+  .program-point span{display:block;color:var(--ink-2);font-size:14px}
+  .model-card{
+    background:#f7fbfd;
+    border:1px solid var(--rule);
+    padding:24px;
+  }
+  .model-card h3{font-size:24px;margin-bottom:6px}
+  .model-card .model-sub{
+    font-size:13px;color:var(--muted);font-weight:700;margin-bottom:18px;
+  }
+  .model-metrics{
+    display:grid;grid-template-columns:repeat(2,1fr);
+    border:1px solid var(--rule);
+    background:var(--bw-white);
+  }
+  .model-metric{
+    padding:18px 16px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  }
+  .model-metric:nth-child(2n){border-right:none}
+  .model-metric:nth-last-child(-n+2){border-bottom:none}
+  .model-metric .value{
+    font-family:var(--display);font-size:30px;font-weight:800;
+    color:var(--bw-blue);line-height:1;
+  }
+  .model-metric .value.positive{color:var(--bw-green)}
+  .model-metric .label{
+    margin-top:7px;
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);font-weight:800;
+  }
+  .assumption-row{
+    display:flex;justify-content:space-between;gap:16px;
+    border-bottom:1px dotted var(--rule);
+    padding:9px 0;font-size:13px;color:var(--ink-2);
+  }
+  .assumption-row:last-child{border-bottom:none}
+  .assumption-row strong{color:var(--ink);font-weight:800;text-align:right}
+  .source-note{
+    margin-top:18px;font-size:12px;color:var(--muted);max-width:none;
+  }
+  .source-note a{color:var(--bw-blue);font-weight:800;text-decoration:none;border-bottom:1px solid rgba(0,114,180,.28)}
+  .source-note a:hover{border-bottom-color:var(--bw-green)}
+
   /* ===== RECOMMENDATION ===== */
   .rec{
     background:var(--bw-dark-blue);color:var(--bw-white);
@@ -435,6 +512,12 @@
     nav ul{display:none}
     nav .brand-logo{width:156px}
     .rec{padding:32px 24px}
+    .incentive-panel{padding:24px}
+    .incentive-head{flex-direction:column}
+    .dominion-logo{max-width:100%;width:240px}
+    .incentive-grid,.model-metrics{grid-template-columns:1fr}
+    .model-metric{border-right:none}
+    .model-metric:nth-last-child(2){border-bottom:1px solid var(--rule)}
     .question-cta{align-items:flex-start;flex-direction:column}
     .bar-row{grid-template-columns:100px 1fr 50px}
     .pullquote{padding:24px}
@@ -480,9 +563,15 @@
     tbody tr{break-inside:avoid}
     th,td{padding:6pt 5pt}
     .tier-badge{font-size:7pt;margin-right:4pt}
-    .voice,.data-note,.question-cta{page-break-inside:avoid}
+    .voice,.data-note,.question-cta,.incentive-panel,.model-card{page-break-inside:avoid}
     .voices{gap:10pt}
     .voice{box-shadow:none}
+    .incentive-panel{box-shadow:none;padding:22pt}
+    .incentive-head{gap:16pt;padding-bottom:14pt;margin-bottom:18pt}
+    .dominion-logo{width:150pt}
+    .incentive-grid{gap:20pt}
+    .model-card{background:#f7fbfd}
+    .model-metric .value{font-size:20pt}
     .rec{background:var(--bw-dark-blue);color:var(--bw-white);padding:34pt;break-inside:avoid}
     .rec h3,.rec p,.rec-step h4,.rec-step p,.question-cta h4,.question-cta p{color:var(--bw-white)}
     .rec-steps{gap:18pt}
@@ -521,6 +610,7 @@
       <li><a href="#overview">Overview</a></li>
       <li><a href="#all">All Neighborhoods</a></li>
       <li><a href="#voices">Resident Voices</a></li>
+      <li><a href="#incentive">Incentive</a></li>
       <li><a href="#recommendation">Recommendation</a></li>
     </ul>
     <button class="print-btn" onclick="window.print()">Print / PDF</button>
@@ -664,9 +754,84 @@
   <div class="voices" id="voices-opposed"></div>
 </section>
 
+<!-- ================= INCENTIVE ================= -->
+<section id="incentive">
+  <div class="section-label">05 / Program Economics</div>
+  <h2>Dominion Energy can <em>change</em> the project math.</h2>
+  <p class="lead">For eligible Virginia commercial and industrial customers, Dominion Energy's Level 2 Charging Program provides a 50% upfront incentive on EV charging make-ready construction and installation, then lets the customer pay the remaining program costs through monthly on-bill payments.</p>
+
+  <div class="incentive-panel">
+    <div class="incentive-head">
+      <div>
+        <h3>Why this matters for a Kingstowne pilot</h3>
+        <p>The largest barrier to neighborhood charging is usually the electrical work before a charger is ever installed: trenching, conduit, wiring, panels, and other make-ready infrastructure. The Dominion program directly targets that cost category, which is why a limited pilot can be evaluated as an operating model rather than only as a capital request.</p>
+      </div>
+      <img class="dominion-logo" src="Dominion Energy Logo.png" alt="Dominion Energy">
+    </div>
+
+    <div class="incentive-grid">
+      <div>
+        <h3>Program structure</h3>
+        <div class="program-points">
+          <div class="program-point">
+            <strong>50% make-ready incentive</strong>
+            <span>Dominion describes the incentive as applying to EV charging construction and installation, commonly referred to as make-ready.</span>
+          </div>
+          <div class="program-point">
+            <strong>Lower upfront burden</strong>
+            <span>The remaining eligible costs can be paid through monthly on-bill payments over the program term, helping avoid a large one-time capital outlay.</span>
+          </div>
+          <div class="program-point">
+            <strong>Customer control of charging operations</strong>
+            <span>Site hosts can set driver pricing and use policy, which lets KROC test cost recovery, access rules, and parking impacts during a pilot.</span>
+          </div>
+          <div class="program-point">
+            <strong>Eligibility still needs confirmation</strong>
+            <span>Participation generally requires a Virginia commercial or industrial Dominion Energy customer, decision authority for the site, at least two qualifying charging stations, a program contract, and site readiness.</span>
+          </div>
+        </div>
+        <p class="source-note">Program description summarized from Dominion Energy's public <a href="https://www.dominionenergy.com/virginia/save-energy/electric-vehicles/charging-on-the-go/level-2-charging-program">Level 2 Charging Program</a> materials and the provided Blue Whale EV program transcript. Final eligibility, pricing, and contract terms should be confirmed with Dominion Energy before board approval.</p>
+      </div>
+
+      <div class="model-card">
+        <h3>Typical 4-port model</h3>
+        <p class="model-sub">Illustrative calculator scenario supplied with this report</p>
+        <div class="model-metrics">
+          <div class="model-metric">
+            <div class="value">$62k</div>
+            <div class="label">Total Project Cost</div>
+          </div>
+          <div class="model-metric">
+            <div class="value">$15k</div>
+            <div class="label">Dominion Incentive</div>
+          </div>
+          <div class="model-metric">
+            <div class="value">$417</div>
+            <div class="label">Monthly Fixed Cost</div>
+          </div>
+          <div class="model-metric">
+            <div class="value positive">$328</div>
+            <div class="label">Net Monthly Cash Flow</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="assumption-row"><span>Ports modeled</span><strong>4</strong></div>
+          <div class="assumption-row"><span>Make-ready / installation cost</span><strong>$30,000</strong></div>
+          <div class="assumption-row"><span>Hardware cost</span><strong>$32,000</strong></div>
+          <div class="assumption-row"><span>Driver pricing vs. utility cost</span><strong>$0.35 / $0.17 per kWh</strong></div>
+          <div class="assumption-row"><span>Utilization assumption</span><strong>0.75 sessions / port / day</strong></div>
+          <div class="assumption-row"><span>Gross monthly charging revenue</span><strong>$1,449</strong></div>
+        </div>
+        <p class="source-note">Model result: $745/month operating profit before fixed financing payments and $328/month estimated net cash flow after fixed payments. Actual results will vary by final design, tariff, utilization, charger/network fees, access policy, and Dominion approval.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= RECOMMENDATION ================= -->
 <section id="recommendation">
-  <div class="section-label">05 / Recommendation</div>
+  <div class="section-label">06 / Recommendation</div>
   <h2>A measured path <em>forward</em>.</h2>
 
   <div class="rec">
