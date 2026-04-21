@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingstowne EV Charging Demand Report — KROC</title>
+<style>
+  :root{
+    --bw-green:#8DC63F;
+    --bw-blue:#0072B4;
+    --bw-dark-blue:#0b2a43;
+    --bw-orange:#F7941D;
+    --bw-gray-light:#EDEDED;
+    --bw-white:#ffffff;
+    --bw-gray-500:#757575;
+    --bw-gray-600:#5d5d5d;
+    --ink:var(--bw-dark-blue);
+    --ink-2:#244760;
+    --paper:#f7fafc;
+    --paper-2:var(--bw-white);
+    --rule:#d7e3ea;
+    --accent:var(--bw-green);
+    --accent-2:var(--bw-orange);
+    --good:var(--bw-green);
+    --warn:var(--bw-orange);
+    --bad:#b04a53;
+    --muted:var(--bw-gray-600);
+    --display:'Paralucent','Paralucent Text','Avenir Next',Avenir,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --sans:'Avenir Next',Avenir,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --mono:'Avenir Next',Avenir,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--sans);
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.55;
+    font-size:15px;
+  }
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    background:
+      linear-gradient(90deg,rgba(0,114,180,.026) 1px,transparent 1px),
+      linear-gradient(0deg,rgba(0,114,180,.022) 1px,transparent 1px);
+    background-size:56px 56px;
+    pointer-events:none;z-index:0;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+
+  /* ===== REPORT GATE ===== */
+  .report-gate{display:none}
+  body.auth-locked{
+    min-height:100vh;
+    overflow:hidden;
+  }
+  body.auth-locked nav,
+  body.auth-locked > .wrap{display:none}
+  body.auth-locked .report-gate{
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:32px;
+    position:relative;
+    z-index:2;
+  }
+  .gate-card{
+    width:min(100%,460px);
+    background:rgba(255,255,255,.96);
+    border:1px solid var(--rule);
+    border-top:5px solid var(--bw-green);
+    box-shadow:0 24px 60px rgba(11,42,67,.14);
+    padding:34px;
+  }
+  .gate-card .brand-logo{
+    display:block;
+    width:190px;
+    height:auto;
+    margin-bottom:28px;
+  }
+  .gate-card h1{
+    font-size:34px;
+    line-height:1.08;
+    margin-bottom:12px;
+  }
+  .gate-card p{
+    max-width:none;
+  }
+  .gate-card label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-weight:800;
+    color:var(--muted);
+    margin:24px 0 8px;
+  }
+  .gate-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+  }
+  .gate-row input{
+    min-width:0;
+    padding:11px 12px;
+    border:1px solid var(--rule);
+    border-radius:4px;
+    color:var(--ink);
+    font:600 15px var(--sans);
+    background:var(--bw-white);
+  }
+  .gate-row input:focus{
+    outline:none;
+    border-color:var(--bw-blue);
+    box-shadow:0 0 0 3px rgba(0,114,180,.14);
+  }
+  .gate-row button{
+    border:none;
+    border-radius:4px;
+    padding:11px 16px;
+    background:var(--bw-green);
+    color:var(--bw-dark-blue);
+    font:800 12px var(--sans);
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .gate-row button:hover{background:var(--bw-orange);color:var(--bw-white)}
+  .gate-error{
+    min-height:22px;
+    margin:12px 0 0;
+    color:var(--bad);
+    font-size:13px;
+    font-weight:700;
+  }
+
+  /* ===== NAV ===== */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--rule);
+    box-shadow:0 8px 24px rgba(11,42,67,.05);
+  }
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;gap:20px}
+  nav .brand{
+    display:flex;align-items:center;gap:11px;
+    font-family:var(--display);font-weight:700;font-size:17px;color:var(--bw-blue);
+    letter-spacing:0;
+  }
+  nav .brand-logo{
+    display:block;width:188px;height:auto;
+  }
+  nav ul{display:flex;gap:22px;list-style:none;font-size:13px;font-weight:500}
+  nav a{color:var(--ink);text-decoration:none;transition:color .2s}
+  nav a:hover{color:var(--bw-blue)}
+  nav .print-btn{
+    background:var(--bw-green);color:var(--bw-dark-blue);
+    border:none;border-radius:4px;padding:9px 15px;font-size:12px;font-weight:700;
+    font-family:var(--sans);cursor:pointer;letter-spacing:.02em;
+    transition:background .2s,color .2s,transform .2s;
+  }
+  nav .print-btn:hover{background:var(--bw-orange);color:var(--bw-white);transform:translateY(-1px)}
+
+  /* ===== HERO ===== */
+  header.hero{
+    padding:80px 0 60px;
+    border-bottom:4px solid var(--bw-blue);
+    position:relative;
+  }
+  header.hero::after{
+    content:'';position:absolute;left:0;bottom:-4px;width:180px;height:4px;
+    background:var(--bw-green);
+  }
+  .eyebrow{
+    font-family:var(--sans);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--bw-blue);font-weight:800;margin-bottom:20px;
+  }
+  .eyebrow::before{content:'';display:inline-block;width:32px;height:4px;background:var(--bw-green);margin-right:10px;vertical-align:middle;border-radius:2px}
+  h1{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(44px,6vw,76px);
+    line-height:1;letter-spacing:0;
+    margin-bottom:24px;
+  }
+  h1 em{font-style:normal;color:var(--bw-green);font-weight:800}
+  .deck{
+    font-family:var(--sans);font-size:22px;font-weight:500;
+    line-height:1.4;max-width:720px;color:var(--ink-2);
+  }
+  .meta-row{
+    display:flex;gap:40px;margin-top:48px;padding-top:24px;
+    border-top:1px solid var(--rule);flex-wrap:wrap;
+    font-family:var(--sans);font-size:12px;color:var(--muted);
+  }
+  .meta-row div span{display:block;color:var(--bw-blue);font-weight:700;font-size:13px;margin-top:2px}
+  .meta-row a{color:var(--bw-blue);text-decoration:none;border-bottom:1px solid rgba(0,114,180,.28)}
+  .meta-row a:hover{border-bottom-color:var(--bw-green)}
+
+  /* ===== SECTIONS ===== */
+  section{padding:72px 0;border-bottom:1px solid var(--rule)}
+  section:last-of-type{border-bottom:none}
+  .section-label{
+    font-family:var(--sans);font-size:11px;letter-spacing:.18em;
+    color:var(--muted);text-transform:uppercase;margin-bottom:16px;
+    font-weight:800;
+  }
+  h2{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(32px,4vw,48px);
+    line-height:1.05;letter-spacing:0;
+    margin-bottom:24px;
+  }
+  h2 em{font-style:normal;color:var(--bw-blue)}
+  h3{
+    font-family:var(--display);font-weight:700;font-size:22px;
+    letter-spacing:0;margin-bottom:12px;color:var(--bw-dark-blue);
+  }
+  p{max-width:700px;margin-bottom:16px;color:var(--ink-2)}
+  p.lead{font-size:18px;font-family:var(--sans);font-weight:500;color:var(--ink)}
+
+  /* ===== TOPLINE STATS ===== */
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:0;margin:40px 0;
+    border:1px solid var(--rule);
+    border-top:4px solid var(--bw-blue);
+    background:var(--bw-white);
+    box-shadow:0 18px 40px rgba(11,42,67,.07);
+  }
+  .stat{
+    padding:32px 24px;
+    border-right:1px solid var(--rule);
+    position:relative;
+  }
+  .stat:last-child{border-right:none}
+  .stat .num{
+    font-family:var(--display);font-weight:800;
+    font-size:64px;line-height:1;color:var(--bw-blue);
+    letter-spacing:0;
+  }
+  .stat .num em{font-style:normal;color:var(--bw-green);font-weight:800}
+  .stat .num .unit{font-size:28px;color:var(--muted)}
+  .stat .label{
+    font-family:var(--sans);font-size:10px;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--muted);margin-top:10px;font-weight:800;
+  }
+  .stat .sub{font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.4}
+
+  /* ===== TWO-COL ===== */
+  .two-col{
+    display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px;
+  }
+
+  /* ===== CHART BARS ===== */
+  .bar-chart{margin:20px 0}
+  .bar-row{
+    display:grid;grid-template-columns:140px 1fr 60px;
+    gap:12px;align-items:center;padding:10px 0;
+    border-bottom:1px dotted var(--rule);
+  }
+  .bar-row:last-child{border-bottom:none}
+  .bar-label{font-size:13px;font-weight:500;color:var(--ink)}
+  .bar-track{background:var(--bw-gray-light);height:22px;position:relative;border-radius:4px;overflow:hidden}
+  .bar-fill{
+    height:100%;background:var(--bw-blue);border-radius:4px;
+    transition:width .8s cubic-bezier(.4,0,.2,1);
+  }
+  .bar-fill.accent{background:var(--bw-green)}
+  .bar-fill.muted{background:var(--muted);opacity:.6}
+  .bar-value{font-family:var(--sans);font-size:12px;text-align:right;color:var(--ink-2);font-weight:700}
+
+  /* ===== PULL QUOTE / CALLOUT ===== */
+  .pullquote{
+    margin:48px 0;padding:32px 40px;
+    background:var(--bw-dark-blue);color:var(--bw-white);
+    position:relative;
+    border-top:4px solid var(--bw-green);
+  }
+  .pullquote::before{
+    content:'"';position:absolute;top:-20px;left:30px;
+    font-family:Georgia,serif;font-size:120px;line-height:1;
+    color:var(--bw-green);font-weight:400;
+  }
+  .pullquote p{
+    font-family:var(--display);font-weight:500;font-size:26px;
+    line-height:1.3;font-style:normal;color:var(--bw-white);
+    max-width:none;margin-bottom:12px;
+  }
+  .pullquote cite{
+    font-family:var(--sans);font-size:11px;font-style:normal;font-weight:800;
+    letter-spacing:.1em;text-transform:uppercase;
+    color:var(--bw-green);
+  }
+
+  /* ===== FULL TABLE ===== */
+  .table-controls{
+    display:flex;gap:12px;margin:24px 0 16px;flex-wrap:wrap;
+    align-items:center;
+  }
+  .table-controls input{
+    flex:1;min-width:200px;padding:10px 14px;
+    border:1px solid var(--rule);background:var(--bw-white);
+    font-family:var(--sans);font-size:14px;color:var(--ink);
+  }
+  .table-controls input:focus{outline:none;border-color:var(--bw-blue);box-shadow:0 0 0 3px rgba(0,114,180,.12)}
+  .sort-btn{
+    padding:10px 14px;background:var(--bw-white);
+    border:1px solid var(--rule);cursor:pointer;
+    font-family:var(--sans);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink);font-weight:800;
+    transition:all .2s;
+  }
+  .sort-btn:hover,.sort-btn.active{background:var(--bw-blue);color:var(--bw-white);border-color:var(--bw-blue)}
+  table{
+    width:100%;border-collapse:collapse;margin-top:12px;
+    font-size:14px;
+  }
+  thead{border-top:3px solid var(--bw-blue);border-bottom:1px solid var(--rule);background:var(--bw-white)}
+  th{
+    text-align:left;padding:12px 10px;
+    font-family:var(--sans);font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);font-weight:800;
+  }
+  th.num,td.num{text-align:right;font-family:var(--sans);font-weight:700}
+  tbody tr{border-bottom:1px dotted var(--rule);transition:background .15s}
+  tbody tr:hover{background:#f0f8fc}
+  td{padding:11px 10px;color:var(--ink-2)}
+  td.name{font-weight:500;color:var(--ink)}
+  .tier-badge{
+    display:inline-block;font-family:var(--sans);font-size:10px;font-weight:800;
+    padding:2px 6px;letter-spacing:.1em;text-transform:uppercase;
+    margin-right:8px;
+  }
+  .tier-1{background:var(--bw-green);color:var(--bw-dark-blue)}
+  .tier-2{background:var(--bw-blue);color:var(--bw-white)}
+  .tier-3{background:var(--bw-gray-light);color:var(--muted)}
+  .score-cell{
+    display:inline-block;min-width:40px;font-family:var(--display);
+    font-weight:800;font-size:16px;color:var(--bw-blue);
+  }
+
+  /* ===== VOICES GRID ===== */
+  .voices{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:16px;
+    margin-top:32px;
+  }
+  .voice{
+    padding:20px 24px;background:var(--bw-white);
+    border-left:3px solid var(--good);position:relative;
+    box-shadow:0 10px 24px rgba(11,42,67,.05);
+  }
+  .voice.opp{border-left-color:var(--bad)}
+  .voice.nuance{border-left-color:var(--warn)}
+  .voice p{
+    font-family:var(--sans);font-style:italic;font-size:16px;
+    line-height:1.45;color:var(--ink);max-width:none;margin-bottom:12px;
+  }
+  .voice .attr{
+    font-family:var(--sans);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);font-weight:800;
+  }
+  .voice .attr strong{color:var(--ink)}
+
+  /* ===== LIMITED DATA NOTE ===== */
+  .data-note{
+    background:var(--bw-white);padding:24px 28px;
+    border:1px solid var(--rule);
+    border-left:4px solid var(--warn);margin-top:28px;
+  }
+  .data-note h4{
+    font-family:var(--display);font-size:18px;margin-bottom:8px;color:var(--bw-dark-blue);
+  }
+  .data-note p{font-size:14px;margin:0;color:var(--ink-2)}
+
+  /* ===== RECOMMENDATION ===== */
+  .rec{
+    background:var(--bw-dark-blue);color:var(--bw-white);
+    padding:60px;margin-top:40px;
+    border-top:6px solid var(--bw-green);
+  }
+  .rec .eyebrow{color:var(--bw-green)}
+  .rec h3{color:var(--bw-white);font-size:32px;margin-bottom:20px;}
+  .rec p{color:var(--bw-white);max-width:none;opacity:.9}
+  .rec-steps{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:32px;
+    margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.18);
+  }
+  .rec-step .num{
+    font-family:var(--display);font-size:48px;font-weight:800;
+    font-style:normal;color:var(--bw-green);line-height:1;
+  }
+  .rec-step h4{
+    font-family:var(--display);font-size:18px;font-weight:700;
+    color:var(--bw-white);margin:8px 0;
+  }
+  .rec-step p{font-size:13px;line-height:1.5;opacity:.8;color:var(--bw-white)}
+  .question-cta{
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+    margin-top:40px;padding:24px 28px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.18);
+    border-left:5px solid var(--bw-green);
+  }
+  .question-cta h4{
+    font-family:var(--display);font-size:22px;font-weight:800;
+    color:var(--bw-white);margin-bottom:6px;
+  }
+  .question-cta p{font-size:14px;margin:0;color:var(--bw-white);opacity:.82}
+  .question-cta a{
+    display:inline-block;white-space:nowrap;
+    background:var(--bw-green);color:var(--bw-dark-blue);
+    padding:11px 16px;border-radius:4px;
+    font-weight:800;text-decoration:none;
+    transition:background .2s,color .2s,transform .2s;
+  }
+  .question-cta a:hover{background:var(--bw-orange);color:var(--bw-white);transform:translateY(-1px)}
+
+  /* ===== FOOTER ===== */
+  footer{
+    padding:40px 0;text-align:center;
+    font-family:var(--sans);font-size:11px;font-weight:700;
+    color:var(--muted);letter-spacing:.1em;
+  }
+  footer a{color:var(--bw-blue);text-decoration:none}
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width:840px){
+    .wrap{padding:0 20px}
+    .stat-grid{grid-template-columns:repeat(2,1fr)}
+    .stat:nth-child(2){border-right:none}
+    .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--rule)}
+    .two-col,.voices,.rec-steps{grid-template-columns:1fr}
+    nav ul{display:none}
+    nav .brand-logo{width:156px}
+    .rec{padding:32px 24px}
+    .question-cta{align-items:flex-start;flex-direction:column}
+    .bar-row{grid-template-columns:100px 1fr 50px}
+    .pullquote{padding:24px}
+    .pullquote p{font-size:20px}
+    table{font-size:12px}
+    th,td{padding:8px 6px}
+    .gate-card{padding:28px 22px}
+    .gate-card h1{font-size:28px}
+    .gate-row{grid-template-columns:1fr}
+  }
+
+  /* ===== PRINT ===== */
+  @media print{
+    @page{size:letter;margin:.42in}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    html{scroll-behavior:auto}
+    body{background:var(--paper);font-size:10pt}
+    body::before{opacity:.45}
+    .report-gate{display:none!important}
+    .wrap{max-width:none;padding:0 10pt}
+    nav{
+      position:static;background:rgba(255,255,255,.96);
+      box-shadow:none;break-after:avoid;
+    }
+    nav .wrap{padding:9pt 10pt}
+    nav .brand-logo{width:150pt}
+    nav ul,.table-controls,.print-btn{display:none}
+    header.hero{padding:38pt 0 32pt}
+    section{padding:32pt 0;border-bottom:1px solid var(--rule)}
+    h1{font-size:38pt}
+    h2{font-size:24pt}
+    h3{font-size:15pt}
+    p{max-width:none}
+    .deck{font-size:15pt;max-width:480pt}
+    .stat-grid{box-shadow:none;break-inside:avoid}
+    .stat{padding:18pt 12pt}
+    .stat .num{font-size:32pt}
+    .stat .num .unit{font-size:16pt}
+    .two-col{gap:24pt}
+    .bar-row{grid-template-columns:95pt 1fr 34pt}
+    table{font-size:8.5pt;page-break-inside:auto}
+    thead{display:table-header-group}
+    tbody tr{break-inside:avoid}
+    th,td{padding:6pt 5pt}
+    .tier-badge{font-size:7pt;margin-right:4pt}
+    .voice,.data-note,.question-cta{page-break-inside:avoid}
+    .voices{gap:10pt}
+    .voice{box-shadow:none}
+    .rec{background:var(--bw-dark-blue);color:var(--bw-white);padding:34pt;break-inside:avoid}
+    .rec h3,.rec p,.rec-step h4,.rec-step p,.question-cta h4,.question-cta p{color:var(--bw-white)}
+    .rec-steps{gap:18pt}
+    .rec-step .num{font-size:30pt}
+    .question-cta{background:rgba(255,255,255,.08)}
+    .pullquote{background:var(--bw-dark-blue);color:var(--bw-white)}
+    .pullquote p{color:var(--bw-white)}
+    .pullquote cite{color:var(--bw-green)}
+    footer{padding:22pt 0}
+  }
+</style>
+</head>
+<body class="auth-locked">
+
+<div class="report-gate" role="dialog" aria-labelledby="gate-title" aria-describedby="gate-copy">
+  <form class="gate-card" id="gate-form">
+    <img class="brand-logo" src="BlueWhale_LogoCMYK.png" alt="Blue Whale EV">
+    <div class="eyebrow">Protected report</div>
+    <h1 id="gate-title">Kingstowne EV Demand Report</h1>
+    <p id="gate-copy">Enter the report password to continue.</p>
+    <label for="gate-password">Password</label>
+    <div class="gate-row">
+      <input id="gate-password" type="password" autocomplete="current-password" autofocus>
+      <button type="submit">View Report</button>
+    </div>
+    <p class="gate-error" id="gate-error" role="alert" aria-live="polite"></p>
+  </form>
+</div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <img class="brand-logo" src="BlueWhale_LogoCMYK.png" alt="Blue Whale EV">
+    </div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#all">All Neighborhoods</a></li>
+      <li><a href="#voices">Resident Voices</a></li>
+      <li><a href="#recommendation">Recommendation</a></li>
+    </ul>
+    <button class="print-btn" onclick="window.print()">Print / PDF</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Prepared for Kingstowne Residential Owners Corporation</div>
+  <h1>Where do <em>Kingstowne</em> residents want EV chargers?</h1>
+  <p class="deck">An analysis of 1,131 resident survey responses across 47 neighborhoods — identifying genuine demand, surfacing legitimate concerns, and recommending a measured rollout.</p>
+  <div class="meta-row">
+    <div>Prepared by<span>Blue Whale EV</span></div>
+    <div>Sample<span>1,131 responses</span></div>
+    <div>Coverage<span>47 neighborhoods</span></div>
+    <div>Method<span><a href="https://docs.google.com/spreadsheets/d/172wlouYDd0rzZ4naYiP23TEWhW1M43NILBskdMDfxyM/edit?resourcekey&usp=forms_web_b&urp=linked#gid=569396530">Google Forms survey, Spring 2026</a></span></div>
+  </div>
+</header>
+
+<!-- ================= OVERVIEW ================= -->
+<section id="overview">
+  <div class="section-label">01 / Community Overview</div>
+  <h2>The demand is <em>real</em> — and concentrated.</h2>
+  <p class="lead">Nearly one in five Kingstowne respondents already drives an EV or plug-in hybrid. Four in ten say their next vehicle is likely to be electric. The question is no longer whether demand exists, but where to meet it first.</p>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="num">224</div>
+      <div class="label">Current EV / PHEV owners</div>
+      <div class="sub">19.8% of respondents — 258 plug-in vehicles reported by current EV / PHEV owners</div>
+    </div>
+    <div class="stat">
+      <div class="num"><em>40</em><span class="unit">%</span></div>
+      <div class="label">Likely next vehicle is EV</div>
+      <div class="sub">452 respondents rated likelihood 7 or higher on a 10-point scale</div>
+    </div>
+    <div class="stat">
+      <div class="num">438</div>
+      <div class="label">Would use chargers weekly+</div>
+      <div class="sub">38.7% committed to regular use of neighborhood chargers</div>
+    </div>
+    <div class="stat">
+      <div class="num"><em>28</em><span class="unit">%</span></div>
+      <div class="label">Chargers drive retention</div>
+      <div class="sub">320 said chargers would make them more likely to stay</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>How likely is your next vehicle to be an EV?</h3>
+      <p>Responses cluster at the extremes — residents have made up their minds in both directions. The 452 respondents scoring 7+ represent the realistic near-term market for community charging.</p>
+      <div class="bar-chart" id="likelihood-chart"></div>
+    </div>
+    <div>
+      <h3>How often would you use neighborhood chargers?</h3>
+      <p>Among those who would use chargers at all, frequency runs high — 93 respondents daily, 228 a few times a week. This indicates real utilization, not theoretical support.</p>
+      <div class="bar-chart" id="frequency-chart"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HONEST READ ================= -->
+<section>
+  <div class="section-label">02 / An Honest Read of the Data</div>
+  <h2>What the survey is really telling us.</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Signal: a clear yes from a motivated minority</h3>
+      <p>320 respondents scored 9 or 10 on likelihood of next-EV adoption. 224 already drive plug-in vehicles. These residents are not theoretical customers — they are actively trying to charge vehicles today, often in townhomes without garage access.</p>
+      <p>The retention signal is especially notable: a Stratford Place resident told us they are <em>"currently considering not renewing my lease for this reason alone."</em></p>
+    </div>
+    <div>
+      <h3>Signal: a vocal opposition with legitimate concerns</h3>
+      <p>40% of respondents said chargers would not make them more likely to stay. 39.6% voted against retention benefit entirely. Common themes: concerns about guest parking loss, HOA fee increases, non-resident access, and aesthetics.</p>
+      <p>These concerns are design problems, not deal-breakers. A credible proposal must address each one directly.</p>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    <p>You better start planning now for facilities that home buyers will be expecting very soon.</p>
+    <cite>— Cantwell resident, non-EV owner, Indifferent on staying</cite>
+  </div>
+</section>
+
+<!-- ================= FULL TABLE ================= -->
+<section id="all">
+  <div class="section-label">03 / All Neighborhoods</div>
+  <h2>The <em>full</em> picture.</h2>
+  <p>Every neighborhood with 15 or more responses, ranked by priority score. Use the search to find a specific neighborhood or sort columns to compare across dimensions.</p>
+
+  <div class="table-controls">
+    <input type="text" id="search" placeholder="Search neighborhoods…">
+    <button class="sort-btn" data-sort="score">Priority</button>
+    <button class="sort-btn" data-sort="n">Response Count</button>
+    <button class="sort-btn" data-sort="ev_owners">EV Owners</button>
+    <button class="sort-btn" data-sort="stay_pct">Retention %</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Neighborhood</th>
+        <th class="num">Respondents</th>
+        <th class="num">EV Owners</th>
+        <th class="num">Likely Next EV</th>
+        <th class="num">Would Stay</th>
+        <th class="num">Would Use</th>
+        <th class="num">Priority</th>
+      </tr>
+    </thead>
+    <tbody id="nbhd-table"></tbody>
+  </table>
+
+  <div class="data-note" style="margin-top:40px">
+    <h4>How priority is calculated</h4>
+    <p>Priority Score = 30% absolute EV owner count · 30% % residents likely to buy EV next (7+) · 20% % retention impact · 20% % who would use chargers weekly or more. Scores are normalized to 0–100. Only neighborhoods with 15+ responses are ranked to ensure statistical confidence.</p>
+  </div>
+
+  <div class="data-note" style="margin-top:40px">
+    <h4>14 neighborhoods with fewer than 15 responses</h4>
+    <p>The following neighborhoods did not reach the sample-size threshold for statistical confidence and are listed separately: The Elms at Kingstowne, Belford, Kingstowne Overlook, Devonshire, Waterside, Windsor Kingstowne, Bradford, Walhaven, Waterford, Hunters Crest, Winsford, Wickford, Founders Ridge, and Beccles Field. Their raw responses are available on request but are not used to drive priority ranking. If KROC extends the survey window, these results should be revisited.</p>
+  </div>
+</section>
+
+<!-- ================= VOICES ================= -->
+<section id="voices">
+  <div class="section-label">04 / Resident Voices</div>
+  <h2>What residents are <em>telling</em> you.</h2>
+  <p class="lead">421 residents left substantive open-text comments. Below is a representative cross-section — strong support, strong opposition, and the nuanced middle. Quoting residents directly is the most honest way to convey the community's actual sentiment.</p>
+
+  <h3 style="margin-top:40px;color:var(--good)">In support</h3>
+  <div class="voices" id="voices-support"></div>
+
+  <h3 style="margin-top:40px;color:var(--warn)">With conditions — design matters</h3>
+  <div class="voices" id="voices-nuance"></div>
+
+  <h3 style="margin-top:40px;color:var(--bad)">Opposed</h3>
+  <div class="voices" id="voices-opposed"></div>
+</section>
+
+<!-- ================= RECOMMENDATION ================= -->
+<section id="recommendation">
+  <div class="section-label">05 / Recommendation</div>
+  <h2>A measured path <em>forward</em>.</h2>
+
+  <div class="rec">
+    <div class="eyebrow">Proposed next step</div>
+    <h3>Pilot deployment in 3–5 highest-priority neighborhoods.</h3>
+    <p>The data supports moving forward, but not at scale and not all at once. A phased pilot in the highest-scoring neighborhoods lets KROC demonstrate real utilization, refine the operating model, and address design concerns with data rather than projections — all before committing community-wide capital.</p>
+
+    <div class="rec-steps">
+      <div class="rec-step">
+        <div class="num">I.</div>
+        <h4>Pilot (Year 1)</h4>
+        <p>Install Level-2 chargers at Eton Square, Dunwich Square, and Northampton. These neighborhoods combine highest demand with strongest utilization signals. Electrical make-ready at 2–3 additional sites for future expansion.</p>
+      </div>
+      <div class="rec-step">
+        <div class="num">II.</div>
+        <h4>Validate (Year 1–2)</h4>
+        <p>Track actual usage, non-resident access, parking impact, and cost recovery. Publish results quarterly to the board and membership. Address the parking and outsider-access concerns raised in this survey head-on, with real data.</p>
+      </div>
+      <div class="rec-step">
+        <div class="num">III.</div>
+        <h4>Scale or Stop</h4>
+        <p>If utilization matches the survey signal and operational concerns are manageable, expand to the next tier of priority neighborhoods. If not, the pilot contained the risk and the board has data to justify pausing.</p>
+      </div>
+    </div>
+
+    <div class="question-cta">
+      <div>
+        <h4>Have questions?</h4>
+        <p>Reach out to Zach Hogan at Blue Whale EV for follow-up on the survey findings or next-step planning.</p>
+      </div>
+      <a href="mailto:zhogan@bluewhaleev.com">zhogan@bluewhaleev.com</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Prepared by Blue Whale EV · Data: KROC EV Charging Interest Survey · Report generated from 1,131 responses <br>
+    Questions: <a href="mailto:zhogan@bluewhaleev.com">zhogan@bluewhaleev.com</a>
+  </div>
+</footer>
+
+</div>
+
+<script>
+  const REPORT_PASSWORD_HASH = '5778815681117ee8ead41fc20353e193197ee02181f3c00de63b1e61fdbfe503';
+  const REPORT_AUTH_KEY = 'kingstowne-report-auth';
+
+  async function hashPassword(value){
+    if(!window.crypto || !window.crypto.subtle){
+      throw new Error('Secure browser context required');
+    }
+    const data = new TextEncoder().encode(value);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest), b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function unlockReport(){
+    document.body.classList.remove('auth-locked');
+    document.body.classList.add('auth-unlocked');
+  }
+
+  if(sessionStorage.getItem(REPORT_AUTH_KEY) === REPORT_PASSWORD_HASH){
+    unlockReport();
+  }
+
+  const gateForm = document.getElementById('gate-form');
+  const gatePassword = document.getElementById('gate-password');
+  const gateError = document.getElementById('gate-error');
+
+  gateForm?.addEventListener('submit', async event=>{
+    event.preventDefault();
+    gateError.textContent = '';
+
+    try{
+      const digest = await hashPassword(gatePassword.value.trim());
+      if(digest === REPORT_PASSWORD_HASH){
+        sessionStorage.setItem(REPORT_AUTH_KEY, digest);
+        gatePassword.value = '';
+        unlockReport();
+        document.querySelector('nav a')?.focus();
+      }else{
+        gateError.textContent = 'Incorrect password. Please try again.';
+        gatePassword.select();
+      }
+    }catch(error){
+      gateError.textContent = 'Password check requires opening this page over HTTPS or localhost.';
+    }
+  });
+
+  const DATA = {"all": [{"name": "The Elms at Kingstowne", "n": 1, "ev_owners": 0, "ev_pct": 0.0, "high_interest": 1, "hi_pct": 100.0, "stay_yes": 1, "stay_indif": 0, "stay_no": 0, "stay_pct": 100.0, "use_regular": 1, "use_pct": 100.0, "total_vehicles": 0, "score": 70.0, "sufficient": false}, {"name": "Eton Square", "n": 64, "ev_owners": 16, "ev_pct": 25.0, "high_interest": 31, "hi_pct": 48.4, "stay_yes": 31, "stay_indif": 13, "stay_no": 20, "stay_pct": 48.4, "use_regular": 35, "use_pct": 54.7, "total_vehicles": 19, "score": 64.0, "sufficient": true}, {"name": "Dunwich Square", "n": 27, "ev_owners": 10, "ev_pct": 37.0, "high_interest": 16, "hi_pct": 59.3, "stay_yes": 12, "stay_indif": 11, "stay_no": 4, "stay_pct": 44.4, "use_regular": 18, "use_pct": 66.7, "total_vehicles": 10, "score": 60.9, "sufficient": true}, {"name": "Northampton", "n": 27, "ev_owners": 14, "ev_pct": 51.9, "high_interest": 19, "hi_pct": 70.4, "stay_yes": 8, "stay_indif": 8, "stay_no": 11, "stay_pct": 29.6, "use_regular": 9, "use_pct": 33.3, "total_vehicles": 18, "score": 56.4, "sufficient": true}, {"name": "Queens Court", "n": 16, "ev_owners": 4, "ev_pct": 25.0, "high_interest": 10, "hi_pct": 62.5, "stay_yes": 8, "stay_indif": 7, "stay_no": 1, "stay_pct": 50.0, "use_regular": 10, "use_pct": 62.5, "total_vehicles": 13, "score": 56.0, "sufficient": true}, {"name": "Attenborough", "n": 40, "ev_owners": 7, "ev_pct": 17.5, "high_interest": 22, "hi_pct": 55.0, "stay_yes": 15, "stay_indif": 12, "stay_no": 13, "stay_pct": 37.5, "use_regular": 20, "use_pct": 50.0, "total_vehicles": 8, "score": 49.9, "sufficient": true}, {"name": "Newcastle", "n": 39, "ev_owners": 14, "ev_pct": 35.9, "high_interest": 22, "hi_pct": 56.4, "stay_yes": 9, "stay_indif": 15, "stay_no": 15, "stay_pct": 23.1, "use_regular": 13, "use_pct": 33.3, "total_vehicles": 14, "score": 49.6, "sufficient": true}, {"name": "Belford", "n": 6, "ev_owners": 2, "ev_pct": 33.3, "high_interest": 4, "hi_pct": 66.7, "stay_yes": 3, "stay_indif": 2, "stay_no": 1, "stay_pct": 50.0, "use_regular": 2, "use_pct": 33.3, "total_vehicles": 4, "score": 49.1, "sufficient": false}, {"name": "Aldenham II", "n": 20, "ev_owners": 5, "ev_pct": 25.0, "high_interest": 10, "hi_pct": 50.0, "stay_yes": 8, "stay_indif": 5, "stay_no": 7, "stay_pct": 40.0, "use_regular": 12, "use_pct": 60.0, "total_vehicles": 4, "score": 49.0, "sufficient": true}, {"name": "Kingstowne Overlook", "n": 8, "ev_owners": 3, "ev_pct": 37.5, "high_interest": 3, "hi_pct": 37.5, "stay_yes": 5, "stay_indif": 1, "stay_no": 2, "stay_pct": 62.5, "use_regular": 5, "use_pct": 62.5, "total_vehicles": 4, "score": 47.4, "sufficient": false}, {"name": "Breighton", "n": 30, "ev_owners": 8, "ev_pct": 26.7, "high_interest": 16, "hi_pct": 53.3, "stay_yes": 9, "stay_indif": 9, "stay_no": 12, "stay_pct": 30.0, "use_regular": 14, "use_pct": 46.7, "total_vehicles": 9, "score": 46.9, "sufficient": true}, {"name": "Dorset", "n": 25, "ev_owners": 3, "ev_pct": 12.0, "high_interest": 13, "hi_pct": 52.0, "stay_yes": 10, "stay_indif": 9, "stay_no": 6, "stay_pct": 40.0, "use_regular": 12, "use_pct": 48.0, "total_vehicles": 3, "score": 44.8, "sufficient": true}, {"name": "Edinburgh", "n": 49, "ev_owners": 6, "ev_pct": 12.2, "high_interest": 20, "hi_pct": 40.8, "stay_yes": 19, "stay_indif": 16, "stay_no": 14, "stay_pct": 38.8, "use_regular": 24, "use_pct": 49.0, "total_vehicles": 6, "score": 44.8, "sufficient": true}, {"name": "Dumbarton", "n": 27, "ev_owners": 8, "ev_pct": 29.6, "high_interest": 12, "hi_pct": 44.4, "stay_yes": 9, "stay_indif": 8, "stay_no": 10, "stay_pct": 33.3, "use_regular": 9, "use_pct": 33.3, "total_vehicles": 7, "score": 42.9, "sufficient": true}, {"name": "Derbyshire", "n": 34, "ev_owners": 8, "ev_pct": 23.5, "high_interest": 13, "hi_pct": 38.2, "stay_yes": 11, "stay_indif": 7, "stay_no": 16, "stay_pct": 32.4, "use_regular": 15, "use_pct": 44.1, "total_vehicles": 9, "score": 42.8, "sufficient": true}, {"name": "Sheffield", "n": 17, "ev_owners": 5, "ev_pct": 29.4, "high_interest": 8, "hi_pct": 47.1, "stay_yes": 6, "stay_indif": 4, "stay_no": 7, "stay_pct": 35.3, "use_regular": 7, "use_pct": 41.2, "total_vehicles": 7, "score": 42.5, "sufficient": true}, {"name": "Yorkshire", "n": 26, "ev_owners": 4, "ev_pct": 15.4, "high_interest": 12, "hi_pct": 46.2, "stay_yes": 9, "stay_indif": 9, "stay_no": 8, "stay_pct": 34.6, "use_regular": 13, "use_pct": 50.0, "total_vehicles": 3, "score": 42.5, "sufficient": true}, {"name": "Wiltshire", "n": 21, "ev_owners": 5, "ev_pct": 23.8, "high_interest": 9, "hi_pct": 42.9, "stay_yes": 6, "stay_indif": 7, "stay_no": 8, "stay_pct": 28.6, "use_regular": 11, "use_pct": 52.4, "total_vehicles": 6, "score": 40.8, "sufficient": true}, {"name": "Devonshire", "n": 12, "ev_owners": 5, "ev_pct": 41.7, "high_interest": 5, "hi_pct": 41.7, "stay_yes": 4, "stay_indif": 4, "stay_no": 4, "stay_pct": 33.3, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 6, "score": 40.2, "sufficient": false}, {"name": "Carlisle", "n": 48, "ev_owners": 13, "ev_pct": 27.1, "high_interest": 16, "hi_pct": 33.3, "stay_yes": 11, "stay_indif": 11, "stay_no": 26, "stay_pct": 22.9, "use_regular": 12, "use_pct": 25.0, "total_vehicles": 16, "score": 39.8, "sufficient": true}, {"name": "Stratford Place", "n": 54, "ev_owners": 5, "ev_pct": 9.3, "high_interest": 19, "hi_pct": 35.2, "stay_yes": 16, "stay_indif": 23, "stay_no": 15, "stay_pct": 29.6, "use_regular": 26, "use_pct": 48.1, "total_vehicles": 6, "score": 38.0, "sufficient": true}, {"name": "Prestwick", "n": 17, "ev_owners": 7, "ev_pct": 41.2, "high_interest": 6, "hi_pct": 35.3, "stay_yes": 5, "stay_indif": 5, "stay_no": 7, "stay_pct": 29.4, "use_regular": 6, "use_pct": 35.3, "total_vehicles": 10, "score": 37.8, "sufficient": true}, {"name": "Aldenham I", "n": 19, "ev_owners": 4, "ev_pct": 21.1, "high_interest": 8, "hi_pct": 42.1, "stay_yes": 5, "stay_indif": 8, "stay_no": 6, "stay_pct": 26.3, "use_regular": 9, "use_pct": 47.4, "total_vehicles": 4, "score": 37.4, "sufficient": true}, {"name": "Chancery", "n": 44, "ev_owners": 4, "ev_pct": 9.1, "high_interest": 19, "hi_pct": 43.2, "stay_yes": 10, "stay_indif": 20, "stay_no": 14, "stay_pct": 22.7, "use_regular": 22, "use_pct": 50.0, "total_vehicles": 4, "score": 36.8, "sufficient": true}, {"name": "Abbey", "n": 31, "ev_owners": 5, "ev_pct": 16.1, "high_interest": 13, "hi_pct": 41.9, "stay_yes": 8, "stay_indif": 9, "stay_no": 14, "stay_pct": 25.8, "use_regular": 10, "use_pct": 32.3, "total_vehicles": 5, "score": 35.4, "sufficient": true}, {"name": "Waterside", "n": 14, "ev_owners": 1, "ev_pct": 7.1, "high_interest": 6, "hi_pct": 42.9, "stay_yes": 4, "stay_indif": 5, "stay_no": 5, "stay_pct": 28.6, "use_regular": 6, "use_pct": 42.9, "total_vehicles": 1, "score": 34.1, "sufficient": false}, {"name": "Windsor Kingstowne", "n": 3, "ev_owners": 0, "ev_pct": 0.0, "high_interest": 2, "hi_pct": 66.7, "stay_yes": 0, "stay_indif": 3, "stay_no": 0, "stay_pct": 0.0, "use_regular": 2, "use_pct": 66.7, "total_vehicles": 0, "score": 33.3, "sufficient": false}, {"name": "Bradford", "n": 12, "ev_owners": 2, "ev_pct": 16.7, "high_interest": 5, "hi_pct": 41.7, "stay_yes": 3, "stay_indif": 4, "stay_no": 5, "stay_pct": 25.0, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 2, "score": 33.2, "sufficient": false}, {"name": "Ashleigh", "n": 24, "ev_owners": 4, "ev_pct": 16.7, "high_interest": 10, "hi_pct": 41.7, "stay_yes": 6, "stay_indif": 7, "stay_no": 11, "stay_pct": 25.0, "use_regular": 7, "use_pct": 29.2, "total_vehicles": 4, "score": 33.1, "sufficient": true}, {"name": "Walhaven", "n": 8, "ev_owners": 2, "ev_pct": 25.0, "high_interest": 4, "hi_pct": 50.0, "stay_yes": 2, "stay_indif": 4, "stay_no": 2, "stay_pct": 25.0, "use_regular": 2, "use_pct": 25.0, "total_vehicles": 2, "score": 32.4, "sufficient": false}, {"name": "Coventry", "n": 23, "ev_owners": 5, "ev_pct": 21.7, "high_interest": 8, "hi_pct": 34.8, "stay_yes": 6, "stay_indif": 7, "stay_no": 10, "stay_pct": 26.1, "use_regular": 6, "use_pct": 26.1, "total_vehicles": 5, "score": 32.1, "sufficient": true}, {"name": "Waterford", "n": 11, "ev_owners": 4, "ev_pct": 36.4, "high_interest": 5, "hi_pct": 45.5, "stay_yes": 2, "stay_indif": 5, "stay_no": 4, "stay_pct": 18.2, "use_regular": 3, "use_pct": 27.3, "total_vehicles": 5, "score": 31.2, "sufficient": false}, {"name": "Hunters Crest", "n": 12, "ev_owners": 2, "ev_pct": 16.7, "high_interest": 4, "hi_pct": 33.3, "stay_yes": 3, "stay_indif": 3, "stay_no": 6, "stay_pct": 25.0, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 2, "score": 30.7, "sufficient": false}, {"name": "Eastbourne", "n": 24, "ev_owners": 5, "ev_pct": 20.8, "high_interest": 10, "hi_pct": 41.7, "stay_yes": 4, "stay_indif": 9, "stay_no": 11, "stay_pct": 16.7, "use_regular": 6, "use_pct": 25.0, "total_vehicles": 5, "score": 30.2, "sufficient": true}, {"name": "Collingwood", "n": 45, "ev_owners": 5, "ev_pct": 11.1, "high_interest": 10, "hi_pct": 22.2, "stay_yes": 11, "stay_indif": 11, "stay_no": 23, "stay_pct": 24.4, "use_regular": 17, "use_pct": 37.8, "total_vehicles": 5, "score": 30.0, "sufficient": true}, {"name": "Amherst Village", "n": 19, "ev_owners": 6, "ev_pct": 31.6, "high_interest": 6, "hi_pct": 31.6, "stay_yes": 4, "stay_indif": 4, "stay_no": 11, "stay_pct": 21.1, "use_regular": 4, "use_pct": 21.1, "total_vehicles": 9, "score": 29.3, "sufficient": true}, {"name": "Cantwell", "n": 55, "ev_owners": 2, "ev_pct": 3.6, "high_interest": 13, "hi_pct": 23.6, "stay_yes": 12, "stay_indif": 20, "stay_no": 23, "stay_pct": 21.8, "use_regular": 17, "use_pct": 30.9, "total_vehicles": 1, "score": 24.4, "sufficient": true}, {"name": "Kenwood Forest", "n": 22, "ev_owners": 2, "ev_pct": 9.1, "high_interest": 6, "hi_pct": 27.3, "stay_yes": 4, "stay_indif": 5, "stay_no": 13, "stay_pct": 18.2, "use_regular": 6, "use_pct": 27.3, "total_vehicles": 2, "score": 23.3, "sufficient": true}, {"name": "Terrington", "n": 25, "ev_owners": 3, "ev_pct": 12.0, "high_interest": 5, "hi_pct": 20.0, "stay_yes": 4, "stay_indif": 11, "stay_no": 10, "stay_pct": 16.0, "use_regular": 9, "use_pct": 36.0, "total_vehicles": 3, "score": 23.2, "sufficient": true}, {"name": "Canterbury", "n": 22, "ev_owners": 1, "ev_pct": 4.5, "high_interest": 6, "hi_pct": 27.3, "stay_yes": 4, "stay_indif": 8, "stay_no": 10, "stay_pct": 18.2, "use_regular": 7, "use_pct": 31.8, "total_vehicles": 1, "score": 23.0, "sufficient": true}, {"name": "Nottingham", "n": 32, "ev_owners": 5, "ev_pct": 15.6, "high_interest": 10, "hi_pct": 31.2, "stay_yes": 4, "stay_indif": 11, "stay_no": 17, "stay_pct": 12.5, "use_regular": 3, "use_pct": 9.4, "total_vehicles": 6, "score": 22.2, "sufficient": true}, {"name": "Winsford", "n": 6, "ev_owners": 2, "ev_pct": 33.3, "high_interest": 2, "hi_pct": 33.3, "stay_yes": 0, "stay_indif": 4, "stay_no": 2, "stay_pct": 0.0, "use_regular": 2, "use_pct": 33.3, "total_vehicles": 2, "score": 19.1, "sufficient": false}, {"name": "Chatsworth", "n": 23, "ev_owners": 3, "ev_pct": 13.0, "high_interest": 5, "hi_pct": 21.7, "stay_yes": 3, "stay_indif": 7, "stay_no": 13, "stay_pct": 13.0, "use_regular": 3, "use_pct": 13.0, "total_vehicles": 3, "score": 17.9, "sufficient": true}, {"name": "Windermere", "n": 28, "ev_owners": 1, "ev_pct": 3.6, "high_interest": 6, "hi_pct": 21.4, "stay_yes": 4, "stay_indif": 9, "stay_no": 15, "stay_pct": 14.3, "use_regular": 5, "use_pct": 17.9, "total_vehicles": 2, "score": 16.9, "sufficient": true}, {"name": "Wickford", "n": 4, "ev_owners": 1, "ev_pct": 25.0, "high_interest": 0, "hi_pct": 0.0, "stay_yes": 1, "stay_indif": 0, "stay_no": 3, "stay_pct": 25.0, "use_regular": 1, "use_pct": 25.0, "total_vehicles": 0, "score": 16.2, "sufficient": false}, {"name": "Founders Ridge", "n": 13, "ev_owners": 2, "ev_pct": 15.4, "high_interest": 2, "hi_pct": 15.4, "stay_yes": 1, "stay_indif": 2, "stay_no": 10, "stay_pct": 7.7, "use_regular": 2, "use_pct": 15.4, "total_vehicles": 2, "score": 13.2, "sufficient": false}, {"name": "Beccles Field", "n": 4, "ev_owners": 1, "ev_pct": 25.0, "high_interest": 0, "hi_pct": 0.0, "stay_yes": 0, "stay_indif": 1, "stay_no": 3, "stay_pct": 0.0, "use_regular": 0, "use_pct": 0.0, "total_vehicles": 1, "score": 1.2, "sufficient": false}], "sufficient": [{"name": "Eton Square", "n": 64, "ev_owners": 16, "ev_pct": 25.0, "high_interest": 31, "hi_pct": 48.4, "stay_yes": 31, "stay_indif": 13, "stay_no": 20, "stay_pct": 48.4, "use_regular": 35, "use_pct": 54.7, "total_vehicles": 19, "score": 64.0, "sufficient": true}, {"name": "Dunwich Square", "n": 27, "ev_owners": 10, "ev_pct": 37.0, "high_interest": 16, "hi_pct": 59.3, "stay_yes": 12, "stay_indif": 11, "stay_no": 4, "stay_pct": 44.4, "use_regular": 18, "use_pct": 66.7, "total_vehicles": 10, "score": 60.9, "sufficient": true}, {"name": "Northampton", "n": 27, "ev_owners": 14, "ev_pct": 51.9, "high_interest": 19, "hi_pct": 70.4, "stay_yes": 8, "stay_indif": 8, "stay_no": 11, "stay_pct": 29.6, "use_regular": 9, "use_pct": 33.3, "total_vehicles": 18, "score": 56.4, "sufficient": true}, {"name": "Queens Court", "n": 16, "ev_owners": 4, "ev_pct": 25.0, "high_interest": 10, "hi_pct": 62.5, "stay_yes": 8, "stay_indif": 7, "stay_no": 1, "stay_pct": 50.0, "use_regular": 10, "use_pct": 62.5, "total_vehicles": 13, "score": 56.0, "sufficient": true}, {"name": "Attenborough", "n": 40, "ev_owners": 7, "ev_pct": 17.5, "high_interest": 22, "hi_pct": 55.0, "stay_yes": 15, "stay_indif": 12, "stay_no": 13, "stay_pct": 37.5, "use_regular": 20, "use_pct": 50.0, "total_vehicles": 8, "score": 49.9, "sufficient": true}, {"name": "Newcastle", "n": 39, "ev_owners": 14, "ev_pct": 35.9, "high_interest": 22, "hi_pct": 56.4, "stay_yes": 9, "stay_indif": 15, "stay_no": 15, "stay_pct": 23.1, "use_regular": 13, "use_pct": 33.3, "total_vehicles": 14, "score": 49.6, "sufficient": true}, {"name": "Aldenham II", "n": 20, "ev_owners": 5, "ev_pct": 25.0, "high_interest": 10, "hi_pct": 50.0, "stay_yes": 8, "stay_indif": 5, "stay_no": 7, "stay_pct": 40.0, "use_regular": 12, "use_pct": 60.0, "total_vehicles": 4, "score": 49.0, "sufficient": true}, {"name": "Breighton", "n": 30, "ev_owners": 8, "ev_pct": 26.7, "high_interest": 16, "hi_pct": 53.3, "stay_yes": 9, "stay_indif": 9, "stay_no": 12, "stay_pct": 30.0, "use_regular": 14, "use_pct": 46.7, "total_vehicles": 9, "score": 46.9, "sufficient": true}, {"name": "Dorset", "n": 25, "ev_owners": 3, "ev_pct": 12.0, "high_interest": 13, "hi_pct": 52.0, "stay_yes": 10, "stay_indif": 9, "stay_no": 6, "stay_pct": 40.0, "use_regular": 12, "use_pct": 48.0, "total_vehicles": 3, "score": 44.8, "sufficient": true}, {"name": "Edinburgh", "n": 49, "ev_owners": 6, "ev_pct": 12.2, "high_interest": 20, "hi_pct": 40.8, "stay_yes": 19, "stay_indif": 16, "stay_no": 14, "stay_pct": 38.8, "use_regular": 24, "use_pct": 49.0, "total_vehicles": 6, "score": 44.8, "sufficient": true}, {"name": "Dumbarton", "n": 27, "ev_owners": 8, "ev_pct": 29.6, "high_interest": 12, "hi_pct": 44.4, "stay_yes": 9, "stay_indif": 8, "stay_no": 10, "stay_pct": 33.3, "use_regular": 9, "use_pct": 33.3, "total_vehicles": 7, "score": 42.9, "sufficient": true}, {"name": "Derbyshire", "n": 34, "ev_owners": 8, "ev_pct": 23.5, "high_interest": 13, "hi_pct": 38.2, "stay_yes": 11, "stay_indif": 7, "stay_no": 16, "stay_pct": 32.4, "use_regular": 15, "use_pct": 44.1, "total_vehicles": 9, "score": 42.8, "sufficient": true}, {"name": "Sheffield", "n": 17, "ev_owners": 5, "ev_pct": 29.4, "high_interest": 8, "hi_pct": 47.1, "stay_yes": 6, "stay_indif": 4, "stay_no": 7, "stay_pct": 35.3, "use_regular": 7, "use_pct": 41.2, "total_vehicles": 7, "score": 42.5, "sufficient": true}, {"name": "Yorkshire", "n": 26, "ev_owners": 4, "ev_pct": 15.4, "high_interest": 12, "hi_pct": 46.2, "stay_yes": 9, "stay_indif": 9, "stay_no": 8, "stay_pct": 34.6, "use_regular": 13, "use_pct": 50.0, "total_vehicles": 3, "score": 42.5, "sufficient": true}, {"name": "Wiltshire", "n": 21, "ev_owners": 5, "ev_pct": 23.8, "high_interest": 9, "hi_pct": 42.9, "stay_yes": 6, "stay_indif": 7, "stay_no": 8, "stay_pct": 28.6, "use_regular": 11, "use_pct": 52.4, "total_vehicles": 6, "score": 40.8, "sufficient": true}, {"name": "Carlisle", "n": 48, "ev_owners": 13, "ev_pct": 27.1, "high_interest": 16, "hi_pct": 33.3, "stay_yes": 11, "stay_indif": 11, "stay_no": 26, "stay_pct": 22.9, "use_regular": 12, "use_pct": 25.0, "total_vehicles": 16, "score": 39.8, "sufficient": true}, {"name": "Stratford Place", "n": 54, "ev_owners": 5, "ev_pct": 9.3, "high_interest": 19, "hi_pct": 35.2, "stay_yes": 16, "stay_indif": 23, "stay_no": 15, "stay_pct": 29.6, "use_regular": 26, "use_pct": 48.1, "total_vehicles": 6, "score": 38.0, "sufficient": true}, {"name": "Prestwick", "n": 17, "ev_owners": 7, "ev_pct": 41.2, "high_interest": 6, "hi_pct": 35.3, "stay_yes": 5, "stay_indif": 5, "stay_no": 7, "stay_pct": 29.4, "use_regular": 6, "use_pct": 35.3, "total_vehicles": 10, "score": 37.8, "sufficient": true}, {"name": "Aldenham I", "n": 19, "ev_owners": 4, "ev_pct": 21.1, "high_interest": 8, "hi_pct": 42.1, "stay_yes": 5, "stay_indif": 8, "stay_no": 6, "stay_pct": 26.3, "use_regular": 9, "use_pct": 47.4, "total_vehicles": 4, "score": 37.4, "sufficient": true}, {"name": "Chancery", "n": 44, "ev_owners": 4, "ev_pct": 9.1, "high_interest": 19, "hi_pct": 43.2, "stay_yes": 10, "stay_indif": 20, "stay_no": 14, "stay_pct": 22.7, "use_regular": 22, "use_pct": 50.0, "total_vehicles": 4, "score": 36.8, "sufficient": true}, {"name": "Abbey", "n": 31, "ev_owners": 5, "ev_pct": 16.1, "high_interest": 13, "hi_pct": 41.9, "stay_yes": 8, "stay_indif": 9, "stay_no": 14, "stay_pct": 25.8, "use_regular": 10, "use_pct": 32.3, "total_vehicles": 5, "score": 35.4, "sufficient": true}, {"name": "Ashleigh", "n": 24, "ev_owners": 4, "ev_pct": 16.7, "high_interest": 10, "hi_pct": 41.7, "stay_yes": 6, "stay_indif": 7, "stay_no": 11, "stay_pct": 25.0, "use_regular": 7, "use_pct": 29.2, "total_vehicles": 4, "score": 33.1, "sufficient": true}, {"name": "Coventry", "n": 23, "ev_owners": 5, "ev_pct": 21.7, "high_interest": 8, "hi_pct": 34.8, "stay_yes": 6, "stay_indif": 7, "stay_no": 10, "stay_pct": 26.1, "use_regular": 6, "use_pct": 26.1, "total_vehicles": 5, "score": 32.1, "sufficient": true}, {"name": "Eastbourne", "n": 24, "ev_owners": 5, "ev_pct": 20.8, "high_interest": 10, "hi_pct": 41.7, "stay_yes": 4, "stay_indif": 9, "stay_no": 11, "stay_pct": 16.7, "use_regular": 6, "use_pct": 25.0, "total_vehicles": 5, "score": 30.2, "sufficient": true}, {"name": "Collingwood", "n": 45, "ev_owners": 5, "ev_pct": 11.1, "high_interest": 10, "hi_pct": 22.2, "stay_yes": 11, "stay_indif": 11, "stay_no": 23, "stay_pct": 24.4, "use_regular": 17, "use_pct": 37.8, "total_vehicles": 5, "score": 30.0, "sufficient": true}, {"name": "Amherst Village", "n": 19, "ev_owners": 6, "ev_pct": 31.6, "high_interest": 6, "hi_pct": 31.6, "stay_yes": 4, "stay_indif": 4, "stay_no": 11, "stay_pct": 21.1, "use_regular": 4, "use_pct": 21.1, "total_vehicles": 9, "score": 29.3, "sufficient": true}, {"name": "Cantwell", "n": 55, "ev_owners": 2, "ev_pct": 3.6, "high_interest": 13, "hi_pct": 23.6, "stay_yes": 12, "stay_indif": 20, "stay_no": 23, "stay_pct": 21.8, "use_regular": 17, "use_pct": 30.9, "total_vehicles": 1, "score": 24.4, "sufficient": true}, {"name": "Kenwood Forest", "n": 22, "ev_owners": 2, "ev_pct": 9.1, "high_interest": 6, "hi_pct": 27.3, "stay_yes": 4, "stay_indif": 5, "stay_no": 13, "stay_pct": 18.2, "use_regular": 6, "use_pct": 27.3, "total_vehicles": 2, "score": 23.3, "sufficient": true}, {"name": "Terrington", "n": 25, "ev_owners": 3, "ev_pct": 12.0, "high_interest": 5, "hi_pct": 20.0, "stay_yes": 4, "stay_indif": 11, "stay_no": 10, "stay_pct": 16.0, "use_regular": 9, "use_pct": 36.0, "total_vehicles": 3, "score": 23.2, "sufficient": true}, {"name": "Canterbury", "n": 22, "ev_owners": 1, "ev_pct": 4.5, "high_interest": 6, "hi_pct": 27.3, "stay_yes": 4, "stay_indif": 8, "stay_no": 10, "stay_pct": 18.2, "use_regular": 7, "use_pct": 31.8, "total_vehicles": 1, "score": 23.0, "sufficient": true}, {"name": "Nottingham", "n": 32, "ev_owners": 5, "ev_pct": 15.6, "high_interest": 10, "hi_pct": 31.2, "stay_yes": 4, "stay_indif": 11, "stay_no": 17, "stay_pct": 12.5, "use_regular": 3, "use_pct": 9.4, "total_vehicles": 6, "score": 22.2, "sufficient": true}, {"name": "Chatsworth", "n": 23, "ev_owners": 3, "ev_pct": 13.0, "high_interest": 5, "hi_pct": 21.7, "stay_yes": 3, "stay_indif": 7, "stay_no": 13, "stay_pct": 13.0, "use_regular": 3, "use_pct": 13.0, "total_vehicles": 3, "score": 17.9, "sufficient": true}, {"name": "Windermere", "n": 28, "ev_owners": 1, "ev_pct": 3.6, "high_interest": 6, "hi_pct": 21.4, "stay_yes": 4, "stay_indif": 9, "stay_no": 15, "stay_pct": 14.3, "use_regular": 5, "use_pct": 17.9, "total_vehicles": 2, "score": 16.9, "sufficient": true}], "limited": [{"name": "The Elms at Kingstowne", "n": 1, "ev_owners": 0, "ev_pct": 0.0, "high_interest": 1, "hi_pct": 100.0, "stay_yes": 1, "stay_indif": 0, "stay_no": 0, "stay_pct": 100.0, "use_regular": 1, "use_pct": 100.0, "total_vehicles": 0, "score": 70.0, "sufficient": false}, {"name": "Belford", "n": 6, "ev_owners": 2, "ev_pct": 33.3, "high_interest": 4, "hi_pct": 66.7, "stay_yes": 3, "stay_indif": 2, "stay_no": 1, "stay_pct": 50.0, "use_regular": 2, "use_pct": 33.3, "total_vehicles": 4, "score": 49.1, "sufficient": false}, {"name": "Kingstowne Overlook", "n": 8, "ev_owners": 3, "ev_pct": 37.5, "high_interest": 3, "hi_pct": 37.5, "stay_yes": 5, "stay_indif": 1, "stay_no": 2, "stay_pct": 62.5, "use_regular": 5, "use_pct": 62.5, "total_vehicles": 4, "score": 47.4, "sufficient": false}, {"name": "Devonshire", "n": 12, "ev_owners": 5, "ev_pct": 41.7, "high_interest": 5, "hi_pct": 41.7, "stay_yes": 4, "stay_indif": 4, "stay_no": 4, "stay_pct": 33.3, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 6, "score": 40.2, "sufficient": false}, {"name": "Waterside", "n": 14, "ev_owners": 1, "ev_pct": 7.1, "high_interest": 6, "hi_pct": 42.9, "stay_yes": 4, "stay_indif": 5, "stay_no": 5, "stay_pct": 28.6, "use_regular": 6, "use_pct": 42.9, "total_vehicles": 1, "score": 34.1, "sufficient": false}, {"name": "Windsor Kingstowne", "n": 3, "ev_owners": 0, "ev_pct": 0.0, "high_interest": 2, "hi_pct": 66.7, "stay_yes": 0, "stay_indif": 3, "stay_no": 0, "stay_pct": 0.0, "use_regular": 2, "use_pct": 66.7, "total_vehicles": 0, "score": 33.3, "sufficient": false}, {"name": "Bradford", "n": 12, "ev_owners": 2, "ev_pct": 16.7, "high_interest": 5, "hi_pct": 41.7, "stay_yes": 3, "stay_indif": 4, "stay_no": 5, "stay_pct": 25.0, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 2, "score": 33.2, "sufficient": false}, {"name": "Walhaven", "n": 8, "ev_owners": 2, "ev_pct": 25.0, "high_interest": 4, "hi_pct": 50.0, "stay_yes": 2, "stay_indif": 4, "stay_no": 2, "stay_pct": 25.0, "use_regular": 2, "use_pct": 25.0, "total_vehicles": 2, "score": 32.4, "sufficient": false}, {"name": "Waterford", "n": 11, "ev_owners": 4, "ev_pct": 36.4, "high_interest": 5, "hi_pct": 45.5, "stay_yes": 2, "stay_indif": 5, "stay_no": 4, "stay_pct": 18.2, "use_regular": 3, "use_pct": 27.3, "total_vehicles": 5, "score": 31.2, "sufficient": false}, {"name": "Hunters Crest", "n": 12, "ev_owners": 2, "ev_pct": 16.7, "high_interest": 4, "hi_pct": 33.3, "stay_yes": 3, "stay_indif": 3, "stay_no": 6, "stay_pct": 25.0, "use_regular": 5, "use_pct": 41.7, "total_vehicles": 2, "score": 30.7, "sufficient": false}, {"name": "Winsford", "n": 6, "ev_owners": 2, "ev_pct": 33.3, "high_interest": 2, "hi_pct": 33.3, "stay_yes": 0, "stay_indif": 4, "stay_no": 2, "stay_pct": 0.0, "use_regular": 2, "use_pct": 33.3, "total_vehicles": 2, "score": 19.1, "sufficient": false}, {"name": "Wickford", "n": 4, "ev_owners": 1, "ev_pct": 25.0, "high_interest": 0, "hi_pct": 0.0, "stay_yes": 1, "stay_indif": 0, "stay_no": 3, "stay_pct": 25.0, "use_regular": 1, "use_pct": 25.0, "total_vehicles": 0, "score": 16.2, "sufficient": false}, {"name": "Founders Ridge", "n": 13, "ev_owners": 2, "ev_pct": 15.4, "high_interest": 2, "hi_pct": 15.4, "stay_yes": 1, "stay_indif": 2, "stay_no": 10, "stay_pct": 7.7, "use_regular": 2, "use_pct": 15.4, "total_vehicles": 2, "score": 13.2, "sufficient": false}, {"name": "Beccles Field", "n": 4, "ev_owners": 1, "ev_pct": 25.0, "high_interest": 0, "hi_pct": 0.0, "stay_yes": 0, "stay_indif": 1, "stay_no": 3, "stay_pct": 0.0, "use_regular": 0, "use_pct": 0.0, "total_vehicles": 1, "score": 1.2, "sufficient": false}]};
+
+  // ========== LIKELIHOOD CHART ==========
+  const likelihoodData = [
+    {label:'10 (Definitely)', count:265, pct:23.4, accent:true},
+    {label:'9', count:55, pct:4.9, accent:true},
+    {label:'8', count:85, pct:7.5, accent:true},
+    {label:'7', count:47, pct:4.2, accent:true},
+    {label:'6', count:41, pct:3.6},
+    {label:'5', count:79, pct:7.0},
+    {label:'4', count:20, pct:1.8},
+    {label:'3', count:51, pct:4.5},
+    {label:'2', count:36, pct:3.2},
+    {label:'1 (Not at all)', count:452, pct:40.0, muted:true},
+  ];
+  const maxLike = Math.max(...likelihoodData.map(d=>d.count));
+  document.getElementById('likelihood-chart').innerHTML = likelihoodData.map(d=>`
+    <div class="bar-row">
+      <div class="bar-label">${d.label}</div>
+      <div class="bar-track"><div class="bar-fill ${d.accent?'accent':d.muted?'muted':''}" style="width:${(d.count/maxLike)*100}%"></div></div>
+      <div class="bar-value">${d.count}</div>
+    </div>
+  `).join('');
+
+  // ========== FREQUENCY CHART ==========
+  const freqData = [
+    {label:'Daily', count:93, accent:true},
+    {label:'Few times/wk', count:228, accent:true},
+    {label:'Weekly', count:117, accent:true},
+    {label:'Rarely', count:122},
+    {label:'Never', count:571, muted:true},
+  ];
+  const maxFreq = Math.max(...freqData.map(d=>d.count));
+  document.getElementById('frequency-chart').innerHTML = freqData.map(d=>`
+    <div class="bar-row">
+      <div class="bar-label">${d.label}</div>
+      <div class="bar-track"><div class="bar-fill ${d.accent?'accent':d.muted?'muted':''}" style="width:${(d.count/maxFreq)*100}%"></div></div>
+      <div class="bar-value">${d.count}</div>
+    </div>
+  `).join('');
+
+  // ========== FULL TABLE ==========
+  let tableData = [...DATA.sufficient];
+  let currentSort = 'score';
+  let sortDir = -1;
+
+  function renderTable(filter=''){
+    const tbody = document.getElementById('nbhd-table');
+    const filtered = tableData.filter(n=>n.name.toLowerCase().includes(filter.toLowerCase()));
+    tbody.innerHTML = filtered.map((n,i)=>{
+      const tier = n.score>=50?'tier-1':n.score>=35?'tier-2':'tier-3';
+      const tierLabel = n.score>=50?'Priority':n.score>=35?'Viable':'Low';
+      return `<tr>
+        <td class="name"><span class="tier-badge ${tier}">${tierLabel}</span>${n.name}</td>
+        <td class="num">${n.n}</td>
+        <td class="num">${n.ev_owners} <span style="color:var(--muted)">(${n.ev_pct}%)</span></td>
+        <td class="num">${n.hi_pct}%</td>
+        <td class="num">${n.stay_pct}%</td>
+        <td class="num">${n.use_pct}%</td>
+        <td class="num"><span class="score-cell">${n.score}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function sortBy(key){
+    if(currentSort===key){sortDir*=-1}else{sortDir=-1;currentSort=key}
+    tableData.sort((a,b)=>(a[key]>b[key]?1:-1)*sortDir);
+    renderTable(document.getElementById('search').value);
+    document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active',b.dataset.sort===key));
+  }
+
+  document.querySelectorAll('.sort-btn').forEach(b=>{
+    b.addEventListener('click',()=>sortBy(b.dataset.sort));
+  });
+  document.getElementById('search').addEventListener('input',e=>renderTable(e.target.value));
+  renderTable();
+  document.querySelector('.sort-btn[data-sort="score"]').classList.add('active');
+
+  // ========== VOICES ==========
+  const voicesSupport = [
+    {q:"I truly think this would be a game changer for many residents. Currently considering not renewing my lease for this reason alone.", n:"Stratford Place", meta:"EV owner · Likelihood 8/10 · Would stay"},
+    {q:"It's a significant way to future-proof the neighborhood and provide a service that uniquely benefits homeowners.", n:"Breighton", meta:"Non-owner · Likelihood 10/10 · Would stay"},
+    {q:"Living in a townhome without a garage — it'll be really helpful to have EV chargers available in the community.", n:"Cantwell", meta:"Non-owner · Likelihood 10/10 · Would stay"},
+    {q:"Kingstowne needs a comprehensive EV charger policy that prepares the community for EVs versus the status quo.", n:"Wiltshire", meta:"EV owner · Likelihood 10/10 · Would stay"},
+  ];
+  const voicesNuance = [
+    {q:"Would expect that fees charged at the charging stations would offset their maintenance costs — there should be no financial demands placed on HOA.", n:"Wiltshire", meta:"Non-owner · Likelihood 4/10 · Indifferent"},
+    {q:"At community centers would be fine, but giant chargers with all the markings in the residential neighborhoods would be visual clutter.", n:"Attenborough", meta:"EV owner · Likelihood 10/10 · Indifferent"},
+    {q:"I'm sure having a few chargers in the neighborhoods would be useful for neighbors without a garage.", n:"Prestwick", meta:"Non-owner · Likelihood 3/10 · Indifferent"},
+    {q:"Price competitively. If Tesla chargers, longer cords for non-Tesla vehicles.", n:"Prestwick", meta:"EV owner · Likelihood 9/10 · Would stay"},
+  ];
+  const voicesOpposed = [
+    {q:"Parking is very limited in our neighborhood already. I would not be in favor of taking away spaces for the small number of residents who might use them.", n:"Breighton", meta:"Non-owner · Parking concern"},
+    {q:"Not a fan of using one of the few visitor parking spaces just for EVs. Everyone has a garage and can install their own.", n:"Dumbarton", meta:"Non-owner · Parking concern"},
+    {q:"I do not want our dues used to pay for EV chargers.", n:"Northampton", meta:"Non-owner · Cost concern"},
+    {q:"You're going to have people outside the community using our charging stations, just like the rest of our amenities.", n:"Dumbarton", meta:"Non-owner · Access concern"},
+  ];
+
+  function renderVoices(id, arr, kind){
+    document.getElementById(id).innerHTML = arr.map(v=>`
+      <div class="voice ${kind}">
+        <p>${v.q}</p>
+        <div class="attr"><strong>${v.n}</strong> · ${v.meta}</div>
+      </div>
+    `).join('');
+  }
+  renderVoices('voices-support', voicesSupport, '');
+  renderVoices('voices-nuance', voicesNuance, 'nuance');
+  renderVoices('voices-opposed', voicesOpposed, 'opp');
+</script>
+
+</body>
+</html>
